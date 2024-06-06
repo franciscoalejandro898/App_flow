@@ -51,6 +51,10 @@ const UserTable = () => {
         }
         
       })
+      // Eliminar token del localStorage
+      localStorage.removeItem('token');
+
+      
       navigate('/login')
       const currentUser = JSON.parse(localStorage.getItem('user'));
       if (currentUser && currentUser.id === userToDelete.id) {
