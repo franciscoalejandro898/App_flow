@@ -35,9 +35,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/users"
-          element={
+        <Route path="/users" element={
             <ProtectedRoute>
               <DashboardLayout>
                 <UserTable />

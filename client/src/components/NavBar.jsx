@@ -8,22 +8,26 @@ const Navbar = () => {
   const [token, setToken] = useState(localStorage.getItem('token'));
 
   useEffect(() => {
-    // Este efecto se ejecuta cada vez que el componente se monta
-    const checkToken = () => {
+    const handleStorageChange = () => {
       const storedToken = localStorage.getItem('token');
-      if (storedToken) {
-        setToken(storedToken);
-      } else {
-        setToken(null);
-      }
+      setToken(storedToken);
     };
 
-    checkToken();
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
+
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token');
+    setToken(storedToken);
+  }, [localStorage.getItem('token')]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('user'); // También eliminamos cualquier información de usuario almacenada
+    localStorage.removeItem('user');
     setToken(null);
     navigate('/login');
   };

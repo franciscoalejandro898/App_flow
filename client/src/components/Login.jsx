@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showModal, setShowModal] = useState(false); // Estado para controlar la visibilidad del modal
+  const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -16,15 +16,17 @@ const Login = () => {
         password
       });
       localStorage.setItem('token', response.data.token);
+      // Emitir un evento de inicio de sesión
+      window.dispatchEvent(new Event('storage'));
       navigate('/dashboard');
     } catch (error) {
       console.error(error);
-      setShowModal(true); // Mostrar el modal en caso de error
+      setShowModal(true);
     }
   };
 
   const handleCloseModal = () => {
-    setShowModal(false); // Cerrar el modal
+    setShowModal(false);
   };
 
   return (
@@ -56,9 +58,7 @@ const Login = () => {
       </form>
 
       {showModal && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center"
-        >
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
           <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
             <h2 className="text-2xl font-semibold text-red-600">Usuario o Contraseña Inválidos</h2>
             <p className="mt-4 text-gray-600">
