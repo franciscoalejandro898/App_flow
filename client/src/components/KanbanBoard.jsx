@@ -1,35 +1,41 @@
 import React, { useState } from 'react';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { DndProvider, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import TaskDetailsModal from './TaskDetailsModal';
+import TaskCard from './TaskCard.jsx';
 import './kanbanBoard.css';
 
 const ItemType = 'CARD';
 
 const initialData = {
   tasks: {
-    'task-1': { id: 'task-1', content: 'Tarea 1' },
-    'task-2': { id: 'task-2', content: 'Tarea 2' },
-    'task-3': { id: 'task-3', content: 'Tarea 3' },
+    'task-1': { id: 'task-1', content: 'Tarea 1', date: 'May 14, 2022' },
+    'task-2': { id: 'task-2', content: 'Tarea 2', date: 'May 15, 2022' },
+    'task-3': { id: 'task-3', content: 'Tarea 3', date: 'May 31, 2022' },
   },
   columns: {
     'column-1': {
       id: 'column-1',
-      title: 'Por Hacer',
+      title: 'Planificación',
       taskIds: ['task-1'],
     },
     'column-2': {
       id: 'column-2',
-      title: 'En Progreso',
+      title: 'Desarrollo',
       taskIds: ['task-2'],
     },
     'column-3': {
       id: 'column-3',
+      title: 'Progreso',
+      taskIds: [],
+    },
+    'column-4': {
+      id: 'column-4',
       title: 'Hecho',
       taskIds: ['task-3'],
     },
   },
-  columnOrder: ['column-1', 'column-2', 'column-3'],
+  columnOrder: ['column-1', 'column-2', 'column-3', 'column-4'],
   people: [
     { id: 'person-1', name: 'John Doe' },
     { id: 'person-2', name: 'Jane Smith' },
@@ -135,7 +141,7 @@ const KanbanBoard = () => {
 
   const addTask = (columnId, content) => {
     const newTaskId = `task-${Object.keys(data.tasks).length + 1}`;
-    const newTask = { id: newTaskId, content };
+    const newTask = { id: newTaskId, content, date: new Date().toLocaleString() };
 
     const newTasks = {
       ...data.tasks,
@@ -169,34 +175,57 @@ const KanbanBoard = () => {
     });
   };
 
+  const deleteTask = (taskId, columnId) => {
+    const newTasks = { ...data.tasks };
+    delete newTasks[taskId];
+
+    const column = data.columns[columnId];
+    const newTaskIds = column.taskIds.filter(id => id !== taskId);
+    const newColumn = { ...column, taskIds: newTaskIds };
+
+    setData({
+      ...data,
+      tasks: newTasks,
+      columns: {
+        ...data.columns,
+        [column.id]: newColumn,
+      },
+    });
+  };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="kanban-board">
-        {data.columnOrder.map((columnId) => {
-          const column = data.columns[columnId];
-          const tasks = column.taskIds.map((taskId) => data.tasks[taskId]);
+        <div className="kanban-columns">
+          {data.columnOrder.map((columnId) => {
+            const column = data.columns[columnId];
+            const tasks = column.taskIds.map((taskId) => data.tasks[taskId]);
 
-          return (
-            <Column
-              key={column.id}
-              column={column}
-              tasks={tasks}
-              moveCard={moveCard}
-              deleteColumn={() => deleteColumn(column.id)}
-              addTask={addTask}
-              setSelectedTask={setSelectedTask}
-            />
-          );
-        })}
-        <div className="kanban-column add-column">
-          <input
-            type="text"
-            placeholder="Nueva columna"
-            value={newColumnTitle}
-            onChange={(e) => setNewColumnTitle(e.target.value)}
-          />
-          <button onClick={addColumn}>Añadir columna</button>
+            return (
+              <Column
+                key={column.id}
+                column={column}
+                tasks={tasks}
+                moveCard={moveCard}
+                deleteColumn={() => deleteColumn(column.id)}
+                addTask={addTask}
+                setSelectedTask={setSelectedTask}
+                deleteTask={deleteTask}
+              />
+            );
+          })}
         </div>
+        {data.columnOrder.length < 5 && (
+          <div className="kanban-column add-column">
+            <input
+              type="text"
+              placeholder="Nueva columna"
+              value={newColumnTitle}
+              onChange={(e) => setNewColumnTitle(e.target.value)}
+            />
+            <button onClick={addColumn}>Añadir columna</button>
+          </div>
+        )}
         {selectedTask && (
           <TaskDetailsModal
             task={selectedTask}
@@ -210,7 +239,7 @@ const KanbanBoard = () => {
   );
 };
 
-const Column = ({ column, tasks, moveCard, deleteColumn, addTask, setSelectedTask }) => {
+const Column = ({ column, tasks, moveCard, deleteColumn, addTask, setSelectedTask, deleteTask }) => {
   const [, drop] = useDrop({
     accept: ItemType,
     drop: (item, monitor) => {
@@ -224,6 +253,8 @@ const Column = ({ column, tasks, moveCard, deleteColumn, addTask, setSelectedTas
   });
 
   const [newTaskContent, setNewTaskContent] = useState('');
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [columnTitle, setColumnTitle] = useState(column.title);
 
   const handleAddTask = () => {
     if (newTaskContent.trim() === '') {
@@ -234,21 +265,59 @@ const Column = ({ column, tasks, moveCard, deleteColumn, addTask, setSelectedTas
     setNewTaskContent('');
   };
 
+  const handleDeleteTask = (taskId) => {
+    deleteTask(taskId, column.id);
+  };
+
+  const handleTitleChange = (e) => {
+    setColumnTitle(e.target.value);
+  };
+
+  const handleTitleSubmit = () => {
+    if (columnTitle.trim() === '') {
+      alert('El título de la columna no puede estar vacío.');
+      setColumnTitle(column.title);
+      setIsEditingTitle(false);
+      return;
+    }
+    column.title = columnTitle;
+    setIsEditingTitle(false);
+  };
+
   return (
     <div ref={drop} className="kanban-column">
       <div className="kanban-column-header">
-        <h2 className="kanban-column-title">{column.title}</h2>
+        {isEditingTitle ? (
+          <input
+            type="text"
+            className="kanban-column-title-input"
+            value={columnTitle}
+            onChange={handleTitleChange}
+            onBlur={handleTitleSubmit}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter') {
+                handleTitleSubmit();
+              }
+            }}
+            autoFocus
+          />
+        ) : (
+          <h2 className="kanban-column-title" onClick={() => setIsEditingTitle(true)}>
+            {column.title}
+          </h2>
+        )}
         <button className="delete-column" onClick={deleteColumn}>×</button>
       </div>
       <div className="kanban-column-content">
         {tasks.map((task, index) => (
-          <Card
+          <TaskCard
             key={task.id}
             task={task}
             index={index}
             columnId={column.id}
             moveCard={moveCard}
             setSelectedTask={setSelectedTask}
+            onDelete={handleDeleteTask}
           />
         ))}
         <div className="add-task">
@@ -265,25 +334,4 @@ const Column = ({ column, tasks, moveCard, deleteColumn, addTask, setSelectedTas
   );
 };
 
-const Card = ({ task, index, columnId, moveCard, setSelectedTask }) => {
-  const [{ isDragging }, drag] = useDrag({
-    type: ItemType,
-    item: { draggableId: task.id, index, droppableId: columnId },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-
-  return (
-    <div
-      ref={drag}
-      className={`kanban-task ${isDragging ? 'is-dragging' : ''}`}
-      onClick={() => setSelectedTask(task)}
-    >
-      {task.content}
-    </div>
-  );
-};
-
 export default KanbanBoard;
-
