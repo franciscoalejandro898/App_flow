@@ -3,7 +3,6 @@ import { DndProvider, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import TaskDetailsModal from './TaskDetailsModal';
 import TaskCard from './TaskCard.jsx';
-import './kanbanBoard.css';
 
 const ItemType = 'CARD';
 
@@ -195,8 +194,8 @@ const KanbanBoard = () => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="kanban-board">
-        <div className="kanban-columns">
+      <div className="flex flex-col p-5 bg-gray-100 h-screen">
+        <div className="flex flex-grow overflow-x-auto space-x-4">
           {data.columnOrder.map((columnId) => {
             const column = data.columns[columnId];
             const tasks = column.taskIds.map((taskId) => data.tasks[taskId]);
@@ -214,18 +213,24 @@ const KanbanBoard = () => {
               />
             );
           })}
+          {data.columnOrder.length < 5 && (
+            <div className="flex flex-col items-center justify-center p-4 bg-gray-200 rounded shadow w-64">
+              <input
+                type="text"
+                placeholder="Nueva columna"
+                value={newColumnTitle}
+                onChange={(e) => setNewColumnTitle(e.target.value)}
+                className="p-2 border rounded mb-2 w-full"
+              />
+              <button
+                onClick={addColumn}
+                className="p-2 bg-green-500 text-white rounded w-full"
+              >
+                Añadir columna
+              </button>
+            </div>
+          )}
         </div>
-        {data.columnOrder.length < 5 && (
-          <div className="kanban-column add-column">
-            <input
-              type="text"
-              placeholder="Nueva columna"
-              value={newColumnTitle}
-              onChange={(e) => setNewColumnTitle(e.target.value)}
-            />
-            <button onClick={addColumn}>Añadir columna</button>
-          </div>
-        )}
         {selectedTask && (
           <TaskDetailsModal
             task={selectedTask}
@@ -285,12 +290,12 @@ const Column = ({ column, tasks, moveCard, deleteColumn, addTask, setSelectedTas
   };
 
   return (
-    <div ref={drop} className="kanban-column">
-      <div className="kanban-column-header">
+    <div ref={drop} className="flex flex-col bg-gray-200 p-4 rounded shadow w-64 min-h-full">
+      <div className="flex justify-between items-center mb-4">
         {isEditingTitle ? (
           <input
             type="text"
-            className="kanban-column-title-input"
+            className="p-2 border rounded w-full"
             value={columnTitle}
             onChange={handleTitleChange}
             onBlur={handleTitleSubmit}
@@ -302,13 +307,13 @@ const Column = ({ column, tasks, moveCard, deleteColumn, addTask, setSelectedTas
             autoFocus
           />
         ) : (
-          <h2 className="kanban-column-title" onClick={() => setIsEditingTitle(true)}>
+          <h2 className="text-xl font-bold cursor-pointer" onClick={() => setIsEditingTitle(true)}>
             {column.title}
           </h2>
         )}
-        <button className="delete-column" onClick={deleteColumn}>×</button>
+        <button className="text-red-500" onClick={deleteColumn}>×</button>
       </div>
-      <div className="kanban-column-content">
+      <div className="flex-grow">
         {tasks.map((task, index) => (
           <TaskCard
             key={task.id}
@@ -320,14 +325,15 @@ const Column = ({ column, tasks, moveCard, deleteColumn, addTask, setSelectedTas
             onDelete={handleDeleteTask}
           />
         ))}
-        <div className="add-task">
+        <div className="mt-4">
           <input
             type="text"
             placeholder="Nueva tarea"
             value={newTaskContent}
             onChange={(e) => setNewTaskContent(e.target.value)}
+            className="p-2 border rounded mb-2 w-full"
           />
-          <button onClick={handleAddTask}>Crear</button>
+          <button onClick={handleAddTask} className="p-2 bg-green-500 text-white rounded w-full">Crear</button>
         </div>
       </div>
     </div>
@@ -335,3 +341,4 @@ const Column = ({ column, tasks, moveCard, deleteColumn, addTask, setSelectedTas
 };
 
 export default KanbanBoard;
+

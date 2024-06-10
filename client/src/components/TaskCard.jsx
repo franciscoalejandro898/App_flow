@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useDrag } from 'react-dnd';
 
 const ItemType = 'CARD';
@@ -12,53 +12,36 @@ const TaskCard = ({ task, index, columnId, moveCard, setSelectedTask, onDelete }
     }),
   });
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [taskContent, setTaskContent] = useState(task.content);
-
-  const handleContentChange = (e) => {
-    setTaskContent(e.target.value);
-  };
-
-  const handleContentSubmit = () => {
-    if (taskContent.trim() === '') {
-      alert('El contenido de la tarea no puede estar vacío.');
-      setTaskContent(task.content);
-      setIsEditing(false);
-      return;
-    }
-    task.content = taskContent;
-    setIsEditing(false);
-  };
-
   return (
     <div
       ref={drag}
-      className={`kanban-task ${isDragging ? 'is-dragging' : ''}`}
+      className={`flex flex-col p-2 border rounded bg-white shadow ${isDragging ? 'opacity-50' : ''}`}
+      onClick={() => setSelectedTask(task)}
     >
-      <div className="task-content">
-        {isEditing ? (
-          <input
-            type="text"
-            className="task-content-input"
-            value={taskContent}
-            onChange={handleContentChange}
-            onBlur={handleContentSubmit}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') {
-                handleContentSubmit();
-              }
-            }}
-            autoFocus
-          />
-        ) : (
-          <p className="task-content-text" onClick={() => setIsEditing(true)}>{task.content}</p>
-        )}
-        <p className="task-date">{task.date}</p>
+      <div className="flex justify-between items-center">
+        <div className="flex-1">
+          <p className="font-bold text-lg mb-2">{task.content}</p>
+        </div>
+        <button
+          className="text-gray-500"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedTask(task);
+          }}
+        >
+          ✏️
+        </button>
       </div>
-      <div className="task-actions">
-        <span className="task-icon edit-icon" onClick={() => setSelectedTask(task)}>&#9998;</span>
-        <span className="task-icon delete-icon" onClick={() => onDelete(task.id)}>&#128465;</span>
-      </div>
+      <p className="text-gray-500 mb-2">{task.date}</p>
+      <button
+        className="self-end text-red-500"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(task.id);
+        }}
+      >
+        🗑️
+      </button>
     </div>
   );
 };
